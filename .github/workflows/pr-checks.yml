@@ -51,8 +51,7 @@ jobs:
           NODE_ENV: test
           PORT: 4000
           FRONTEND_URL: http://localhost:5173
-          EMAIL_USER: ""
-          EMAIL_PASS: ""
+          RESEND_API_KEY: ""
           CONTACT_RECEIVER: test@example.com
 
   build-check:
@@ -77,4 +76,4 @@ jobs:
 
       - run: npm run build
         env:
-          VITE_API_URL: https://api.yourdomain.com
+          VITE_API_URL: https://portfolio-backend-johndoe.vercel.app

@@ -14,7 +14,15 @@ const app = express()
 
 // ── Security & parsing ──────────────────────────────────────
 app.use(helmet())
-app.use(cors({ origin: config.frontendUrl, credentials: true }))
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. curl, Postman) in dev
+    if (!origin && config.nodeEnv === 'development') return callback(null, true)
+    if (config.frontendUrls.includes(origin)) return callback(null, true)
+    callback(new Error(`CORS: origin ${origin} not allowed`))
+  },
+  credentials: true,
+}))
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true }))
 app.use(morgan(config.nodeEnv === 'development' ? 'dev' : 'combined'))
@@ -33,11 +41,15 @@ app.use('/api/contact', contactLimiter, contactRoutes)
 app.use(notFound)
 app.use(errorHandler)
 
-// ── Start ────────────────────────────────────────────────────
-app.listen(config.port, () => {
-  console.log(`\n🚀 Portfolio API running on http://localhost:${config.port}`)
-  console.log(`   ENV : ${config.nodeEnv}`)
-  console.log(`   CORS: ${config.frontendUrl}\n`)
-})
+// ── Start (local dev only) ───────────────────────────────────
+// In production on Vercel, the app is exported as a serverless function.
+// app.listen is only used when running locally with `npm run dev`.
+if (config.nodeEnv !== 'production') {
+  app.listen(config.port, () => {
+    console.log(`\n🚀 Portfolio API running on http://localhost:${config.port}`)
+    console.log(`   ENV : ${config.nodeEnv}`)
+    console.log(`   CORS: ${config.frontendUrls.join(', ')}\n`)
+  })
+}
 
 export default app

@@ -1,4 +1,8 @@
-name: 🚀 Build & Deploy Portfolio
+name: 🔍 CI Checks (Vercel deploys automatically)
+
+# NOTE: Vercel watches your GitHub repo and deploys automatically on every
+# push to main. These workflows are kept as a safety net to catch broken
+# builds or failing tests BEFORE Vercel deploys them.
 
 on:
   push:
@@ -6,20 +10,9 @@ on:
   pull_request:
     branches: [main]
 
-# Allow GitHub Actions to deploy to Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Only one deployment at a time
-concurrency:
-  group: pages
-  cancel-in-progress: false
-
 jobs:
   # ─────────────────────────────────────────────
-  # JOB 1 — Test & Lint Backend
+  # JOB 1 — Test Backend
   # ─────────────────────────────────────────────
   test-backend:
     name: 🧪 Test Backend
@@ -49,12 +42,11 @@ jobs:
           NODE_ENV: test
           PORT: 4000
           FRONTEND_URL: http://localhost:5173
-          EMAIL_USER: ""
-          EMAIL_PASS: ""
+          RESEND_API_KEY: ""
           CONTACT_RECEIVER: test@example.com
 
   # ─────────────────────────────────────────────
-  # JOB 2 — Build Frontend
+  # JOB 2 — Build Frontend (verify it compiles)
   # ─────────────────────────────────────────────
   build-frontend:
     name: 🏗️ Build Frontend
@@ -82,27 +74,5 @@ jobs:
       - name: 🏗️ Build production bundle
         run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
-
-      - name: 📤 Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: frontend/dist
-
-  # ─────────────────────────────────────────────
-  # JOB 3 — Deploy to GitHub Pages (main only)
-  # ─────────────────────────────────────────────
-  deploy-frontend:
-    name: 🌐 Deploy to GitHub Pages
-    runs-on: ubuntu-latest
-    needs: build-frontend
-    if: github.ref == 'refs/heads/main'
-
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    steps:
-      - name: 🚀 Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+          # Placeholder — real value lives in Vercel dashboard
+          VITE_API_URL: https://portfolio-backend-johndoe.vercel.app

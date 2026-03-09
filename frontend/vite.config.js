@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  // Set base to '/' when using a custom domain, or '/repo-name/' for username.github.io/repo-name
   base: '/',
   build: {
     outDir: 'dist',
@@ -11,6 +10,7 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // Proxy /api calls to the local backend during development
     proxy: {
       '/api': {
         target: 'http://localhost:4000',
@@ -19,3 +19,4 @@ export default defineConfig({
     },
   },
 })
+
