@@ -15,13 +15,17 @@ const app = express()
 // ── Security & parsing ──────────────────────────────────────
 app.use(helmet())
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (e.g. curl, Postman) in dev
-    if (!origin && config.nodeEnv === 'development') return callback(null, true)
-    if (config.frontendUrls.includes(origin)) return callback(null, true)
-    callback(new Error(`CORS: origin ${origin} not allowed`))
-  },
-  credentials: true,
+    origin: (origin, callback) => {
+        // Allow requests with no origin — direct browser visits, Postman, curl, health checks
+        if (!origin) return callback(null, true)
+
+        // Allow known frontend URLs
+        if (config.frontendUrls.includes(origin)) return callback(null, true)
+
+        // Block everything else
+        callback(new Error(`CORS: origin ${origin} not allowed`))
+    },
+    credentials: true,
 }))
 app.use(express.json({ limit: '10kb' }))
 app.use(express.urlencoded({ extended: true }))
