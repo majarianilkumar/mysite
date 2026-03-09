@@ -1,35 +1,34 @@
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import { config } from '../config/config.js'
 
 export async function sendContactEmail({ firstName, lastName, email, subject, message }) {
-  // In development, log to console if no credentials configured
-  if (!config.email.user || config.email.user === 'your@gmail.com') {
-    console.log('\n📧 Contact form submission (dev mode):')
-    console.log({ firstName, lastName, email, subject, message })
-    return { messageId: 'dev-' + Date.now() }
-  }
+    // Dev mode — log to console if no Resend API key configured
+    if (!config.resendApiKey) {
+        console.log('\n📧 Contact form submission (dev mode — no RESEND_API_KEY set):')
+        console.log({ firstName, lastName, email, subject, message })
+        return { id: 'dev-' + Date.now() }
+    }
 
-  const transporter = nodemailer.createTransport({
-    host: config.email.host,
-    port: config.email.port,
-    secure: false,
-    auth: { user: config.email.user, pass: config.email.pass },
-  })
+    const resend = new Resend(config.resendApiKey)
 
-  const info = await transporter.sendMail({
-    from: `"Portfolio Contact" <${config.email.user}>`,
-    to: config.email.receiver,
-    replyTo: email,
-    subject: `[Portfolio] ${subject}`,
-    html: `
-      <h2>New contact from portfolio</h2>
-      <p><strong>Name:</strong> ${firstName} ${lastName}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      <p><strong>Subject:</strong> ${subject}</p>
-      <hr/>
-      <p>${message.replace(/\n/g, '<br/>')}</p>
+    const { data, error } = await resend.emails.send({
+        from: 'Portfolio Contact <onboarding@resend.dev>',
+        to: config.email.receiver,
+        reply_to: email,
+        subject: `[Portfolio] ${subject}`,
+        html: `
+      <div style="font-family:sans-serif;max-width:560px;margin:0 auto;">
+        <h2 style="color:#6c63ff;margin-bottom:4px;">New message from your portfolio</h2>
+        <hr style="border:1px solid #e2e8f0;margin:16px 0"/>
+        <p><strong>Name:</strong> ${firstName} ${lastName}</p>
+        <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+        <p><strong>Subject:</strong> ${subject}</p>
+        <hr style="border:1px solid #e2e8f0;margin:16px 0"/>
+        <p style="white-space:pre-line;">${message}</p>
+      </div>
     `,
-  })
+    })
 
-  return info
+    if (error) throw new Error(error.message)
+    return data
 }
